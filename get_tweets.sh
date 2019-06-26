@@ -18,3 +18,5 @@ for tweet in tweets:
     tweet2['user'] = {'screen_name' : tweet['user']['screen_name']}
 
     db.shibuya.insert(tweet2)
+
+# test
