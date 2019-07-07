@@ -5,10 +5,10 @@ import json
 import datetime, time, sys
 from abc import ABCMeta, abstractmethod
 
-CK = '8uYOL8qfRB---------------'                             # Consumer Key
-CS = 'HFIcvU2nCB----------------------------------------'    # Consumer Secret
-AT = '104137178-----------------------------------------'    # Access Token
-AS = '4ViVoEMdiH-----------------------------------'         # Accesss Token Secert
+CK = 'EJrw1yLQ96Sa5rTf3l4aE6gK2'                             # Consumer Key
+CS = 'ecLy8mAqaQe8A69Z5sSYAEODX7wWnS8S2kvZr9jtFmNZdp3ziR'    # Consumer Secret
+AT = '1003309180747280385-XnpsfcvlIQQRSoBY8EqO88q4Qqe6Qc'    # Access Token
+AS = '4PudMmfjx6WKytlKqhTkj1cNR3w3mVddVTeSZ5C6jSpy1'         # Accesss Token Secert
 
 class TweetsGetter(object):
     __metaclass__ = ABCMeta
@@ -91,8 +91,8 @@ class TweetsGetter(object):
                         yield tweet
 
                     cnt += 1
-                    if cnt % 100 == 0:
-                        print ('%d件 ' % cnt)
+                    # if cnt % 100 == 0:
+                        # print ('%d件 ' % cnt)
 
                     if total > 0 and cnt >= total:
                         return
@@ -129,8 +129,11 @@ class TweetsGetter(object):
                 continue
 
             unavailableCnt = 0
-
-            if res.status_code != 200:
+            if res.status_code == 429:
+                print("リクエスト回数の上限に達したため15分間待機します(" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ")")
+                time.sleep(900)
+                continue
+            elif res.status_code != 200:
                 raise Exception('Twitter API error %d' % res.status_code)
 
             remaining, reset = self.getLimitContext(json.loads(res.text))
@@ -156,8 +159,8 @@ class TweetsGetter(object):
         return TweetsGetterBySearch(keyword)
 
     @staticmethod
-    def byUser(screen_name):
-        return TweetsGetterByUser(screen_name)
+    def byUser(user_id):
+        return TweetsGetterByUser(user_id)
 
 
 class TweetsGetterBySearch(TweetsGetter):
@@ -200,16 +203,16 @@ class TweetsGetterByUser(TweetsGetter):
     '''
     ユーザーを指定してツイートを取得
     '''
-    def __init__(self, screen_name):
+    def __init__(self, user_id):
         super(TweetsGetterByUser, self).__init__()
-        self.screen_name = screen_name
+        self.user_id = user_id
         
     def specifyUrlAndParams(self):
         '''
         呼出し先 URL、パラメータを返す
         '''
         url = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
-        params = {'screen_name':self.screen_name, 'count':200}
+        params = {'user_id':self.user_id, 'count':200}
         return url, params
 
     def pickupTweet(self, res_text):
@@ -237,13 +240,13 @@ if __name__ == '__main__':
     # キーワードで取得
     getter = TweetsGetter.bySearch(u'渋谷')
     
-    # ユーザーを指定して取得 （screen_name）
+    # ユーザーを指定して取得 （user_id）
     #getter = TweetsGetter.byUser('AbeShinzo')
 
     cnt = 0
     for tweet in getter.collect(total = 3000):
         cnt += 1
         print ('------ %d' % cnt)
-        print ('{} {} {}'.format(tweet['id'], tweet['created_at'], '@'+tweet['user']['screen_name']))
+        print ('{} {} {}'.format(tweet['id'], tweet['created_at'], '@'+tweet['user']['user_id']))
         print (tweet['text'])
         #
